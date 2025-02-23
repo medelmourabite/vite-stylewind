@@ -1,9 +1,4 @@
-import React, {
-  ComponentProps,
-  createElement,
-  forwardRef,
-  HTMLProps,
-} from 'react';
+import { ComponentProps, createElement, HTMLProps, useMemo } from 'react';
 
 const tags = [
   'div',
@@ -35,6 +30,12 @@ const tags = [
   'style',
   'title',
   'desc',
+  'main',
+  'section',
+  'aside',
+  'header',
+  'footer',
+  'button',
 ] as const;
 
 type Tag = (typeof tags)[number];
@@ -42,16 +43,16 @@ type ClassNames = HTMLProps<HTMLElement>['className'];
 type Props = ComponentProps<Tag>;
 
 const baseStyled = (tag: Tag) => {
-  return (arg: ClassNames[] | ((props: Props) => ClassNames[])) => {
+  return <T,>(arg: ClassNames[] | ((props: Props & T) => ClassNames[])) => {
     const Component = (props: Props) => createElement(tag, { ...props });
-    return ({ ...props }: Props) => {
-      let classes: ClassNames[] = [];
-      if (typeof arg === 'function') {
-        classes = arg(props);
-      } else {
-        classes = arg;
-      }
-      return <Component {...props} className={classes?.join(' ')} />;
+    return (props: Props & T) => {
+      const className = useMemo(() => {
+        if (typeof arg === 'function') {
+          return arg(props)?.join(' ');
+        }
+        return arg?.join(' ');
+      }, [props]);
+      return <Component {...props} className={className} />;
     };
   };
 };
